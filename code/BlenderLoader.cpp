@@ -51,6 +51,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "BlenderIntermediate.h"
 #include "BlenderModifier.h"
+#include "BlenderBMesh.h"
 
 #include "StreamReader.h"
 #include "MemoryIOWrapper.h"
@@ -658,6 +659,16 @@ void BlenderImporter::ConvertMesh(const Scene& /*in*/, const Object* /*obj*/, co
 	ConversionData& conv_data, TempArray<std::vector,aiMesh>&  temp
 	) 
 {
+	// TODO: Resolve various problems with BMesh triangluation before re-enabling.
+	//       See issues #400, #373, #318  #315 and #132.
+#if defined(TODO_FIX_BMESH_CONVERSION)
+	BlenderBMeshConverter BMeshConverter( mesh );
+	if ( BMeshConverter.ContainsBMesh( ) )
+	{
+		mesh = BMeshConverter.TriangulateBMesh( );
+	}
+#endif
+
 	typedef std::pair<const int,size_t> MyPair;
 	if ((!mesh->totface && !mesh->totloop) || !mesh->totvert) {
 		return;
@@ -992,7 +1003,7 @@ void BlenderImporter::ConvertMesh(const Scene& /*in*/, const Object* /*obj*/, co
 }
 
 // ------------------------------------------------------------------------------------------------
-aiCamera* BlenderImporter::ConvertCamera(const Scene& /*in*/, const Object* obj, const Camera* camera, ConversionData& /*conv_data*/)
+aiCamera* BlenderImporter::ConvertCamera(const Scene& /*in*/, const Object* obj, const Camera* /*camera*/, ConversionData& /*conv_data*/)
 {
 	ScopeGuard<aiCamera> out(new aiCamera());
 	out->mName = obj->id.name+2;
@@ -1003,7 +1014,7 @@ aiCamera* BlenderImporter::ConvertCamera(const Scene& /*in*/, const Object* obj,
 }
 
 // ------------------------------------------------------------------------------------------------
-aiLight* BlenderImporter::ConvertLight(const Scene& in, const Object* obj, const Lamp* lamp, ConversionData& conv_data)
+aiLight* BlenderImporter::ConvertLight(const Scene& /*in*/, const Object* obj, const Lamp* lamp, ConversionData& /*conv_data*/)
 {
 	ScopeGuard<aiLight> out(new aiLight());
 	out->mName = obj->id.name+2;

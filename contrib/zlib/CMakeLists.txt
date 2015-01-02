@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 2.4.4)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 
+# use the old project command http://www.cmake.org/cmake/help/v3.0/policy/CMP0048.html
+cmake_policy(PUSH)
+cmake_policy(SET CMP0048 OLD)
 project(zlib C)
+cmake_policy(POP)
 
 set(VERSION "1.2.8")
 
@@ -84,9 +88,6 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/zlib.pc.cmakein
 configure_file(	${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.cmakein
 		${CMAKE_CURRENT_BINARY_DIR}/zconf.h @ONLY)
 		
-# (hack) needed for the regular assimp build, which needs to be able to find zconf.h
-configure_file(	${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.cmakein
-		${CMAKE_CURRENT_SOURCE_DIR}/zconf.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR})
 
 
@@ -187,46 +188,9 @@ if(MINGW)
     set(ZLIB_DLL_SRCS ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj)
 endif(MINGW)
 
-#add_library(zlib SHARED ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_DLL_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 add_library(zlibstatic STATIC ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
-#set_target_properties(zlib PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
-#set_target_properties(zlib PROPERTIES SOVERSION 1)
-
-#if(NOT CYGWIN)
-    # This property causes shared libraries on Linux to have the full version
-    # encoded into their final filename.  We disable this on Cygwin because
-    # it causes cygz-${ZLIB_FULL_VERSION}.dll to be created when cygz.dll
-    # seems to be the default.
-    #
-    # This has no effect with MSVC, on that platform the version info for
-    # the DLL comes from the resource file win32/zlib1.rc
-    #set_target_properties(zlib PROPERTIES VERSION ${ZLIB_FULL_VERSION})
-#endif()
-
-#if(UNIX)
-    # On unix-like platforms the library is almost always called libz
-   #set_target_properties(zlib zlibstatic PROPERTIES OUTPUT_NAME z)
-   #if(NOT APPLE)
-   #  set_target_properties(zlib PROPERTIES LINK_FLAGS "-Wl,--version-script,\"${CMAKE_CURRENT_SOURCE_DIR}/zlib.map\"")
-   #endif()
-#elseif(BUILD_SHARED_LIBS AND WIN32)
-#    # Creates zlib1.dll when building shared library version
-#    set_target_properties(zlib PROPERTIES SUFFIX "1.dll")
-#endif()
-
-#if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
-#    install(TARGETS zlib zlibstatic
-#        RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
-#        ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
-#        LIBRARY DESTINATION "${INSTALL_LIB_DIR}" )
-#endif()
-#if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
-#    install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION "${INSTALL_INC_DIR}")
-#endif()
-#if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
-#    install(FILES zlib.3 DESTINATION "${INSTALL_MAN_DIR}/man3")
-#endif()
-#if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
-#    install(FILES ${ZLIB_PC} DESTINATION "${INSTALL_PKGCONFIG_DIR}")
-#endif()
-
+INSTALL( TARGETS zlibstatic
+         LIBRARY DESTINATION ${ASSIMP_LIB_INSTALL_DIR}
+         ARCHIVE DESTINATION ${ASSIMP_LIB_INSTALL_DIR}
+         RUNTIME DESTINATION ${ASSIMP_BIN_INSTALL_DIR}
+         COMPONENT ${LIBASSIMP_COMPONENT})

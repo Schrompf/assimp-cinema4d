@@ -160,6 +160,10 @@ def process_dir(d, outfile_results, zipin, result):
             process_dir(fullpath, outfile_results, zipin, result)
             continue
 
+        if f in settings.files_to_ignore:
+            print("Ignoring " + f)
+            continue
+
         for pppreset in settings.pp_configs_to_test:
             filehash = utils.hashing(fullpath, pppreset)
             failure = False
@@ -170,6 +174,12 @@ def process_dir(d, outfile_results, zipin, result):
                    failure = True
             except KeyError:
                 #print("Didn't find "+fullpath+" (Hash is "+filehash+") in database")
+                continue
+
+            # Ignore extensions via settings.py configured list
+            # todo: Fix for multi dot extensions like .skeleton.xml
+            ext = os.path.splitext(fullpath)[1].lower()
+            if ext != "" and ext in settings.exclude_extensions:
                 continue
 
             print("-"*60 + "\n  " + os.path.realpath(fullpath) + " pp: " + pppreset) 
@@ -252,6 +262,5 @@ def run_test():
 # -------------------------------------------------------------------------------
 if __name__ == "__main__":
     run_test()
-    input("Press any key to continue ...")
 
 # vim: ai ts=4 sts=4 et sw=4
