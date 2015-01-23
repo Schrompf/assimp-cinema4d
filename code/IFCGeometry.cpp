@@ -699,7 +699,7 @@ void ProcessSweptAreaSolid(const IfcSweptAreaSolid& swept, TempMesh& meshout,
 }
 
 // ------------------------------------------------------------------------------------------------
-bool ProcessGeometricItem(const IfcRepresentationItem& geo, std::vector<unsigned int>& mesh_indices, 
+bool ProcessGeometricItem(const IfcRepresentationItem& geo, unsigned int matid, std::vector<unsigned int>& mesh_indices, 
 	ConversionData& conv)
 {
 	bool fix_orientation = true;
@@ -777,7 +777,7 @@ bool ProcessGeometricItem(const IfcRepresentationItem& geo, std::vector<unsigned
 
 	aiMesh* const mesh = meshtmp->ToMesh();
 	if(mesh) {
-		mesh->mMaterialIndex = ProcessMaterials(geo,conv);
+		mesh->mMaterialIndex = matid; 
 		mesh_indices.push_back(conv.meshes.size());
 		conv.meshes.push_back(mesh);
 		return true;
@@ -807,10 +807,11 @@ void AssignAddedMeshes(std::vector<unsigned int>& mesh_indices,aiNode* nd,
 
 // ------------------------------------------------------------------------------------------------
 bool TryQueryMeshCache(const IfcRepresentationItem& item, 
-	std::vector<unsigned int>& mesh_indices, 
+	std::vector<unsigned int>& mesh_indices, unsigned int mat_index,
 	ConversionData& conv) 
 {
-	ConversionData::MeshCache::const_iterator it = conv.cached_meshes.find(&item);
+	ConversionData::MeshCacheIndex idx(&item, mat_index);
+	ConversionData::MeshCache::const_iterator it = conv.cached_meshes.find(idx);
 	if (it != conv.cached_meshes.end()) {
 		std::copy((*it).second.begin(),(*it).second.end(),std::back_inserter(mesh_indices));
 		return true;
@@ -820,21 +821,25 @@ bool TryQueryMeshCache(const IfcRepresentationItem& item,
 
 // ------------------------------------------------------------------------------------------------
 void PopulateMeshCache(const IfcRepresentationItem& item, 
-	const std::vector<unsigned int>& mesh_indices, 
+	const std::vector<unsigned int>& mesh_indices, unsigned int mat_index,
 	ConversionData& conv)
 {
-	conv.cached_meshes[&item] = mesh_indices;
+	ConversionData::MeshCacheIndex idx(&item, mat_index);
+	conv.cached_meshes[idx] = mesh_indices;
 }
 
 // ------------------------------------------------------------------------------------------------
-bool ProcessRepresentationItem(const IfcRepresentationItem& item, 
-	std::vector<unsigned int>& mesh_indices, 
+bool ProcessRepresentationItem(const IfcRepresentationItem& item, unsigned int matid,
+	std::vector<unsigned int>& mesh_indices,
 	ConversionData& conv)
 {
-	if (!TryQueryMeshCache(item,mesh_indices,conv)) {
-		if(ProcessGeometricItem(item,mesh_indices,conv)) {
+	// determine material
+	unsigned int localmatid = ProcessMaterials(item.GetID(), matid, conv, true);
+
+	if (!TryQueryMeshCache(item,mesh_indices,localmatid,conv)) {
+		if(ProcessGeometricItem(item,localmatid,mesh_indices,conv)) {
 			if(mesh_indices.size()) {
-				PopulateMeshCache(item,mesh_indices,conv);
+				PopulateMeshCache(item,mesh_indices,localmatid,conv);
 			}
 		}
 		else return false;
