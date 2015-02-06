@@ -97,10 +97,10 @@ struct TempMesh
 	void RemoveDegenerates();
 
 	void FixupFaceOrientation();
+
+	static IfcVector3 ComputePolygonNormal(const IfcVector3* vtcs, size_t cnt, bool normalize = true);
 	IfcVector3 ComputeLastPolygonNormal(bool normalize = true) const;
-	void ComputePolygonNormals(std::vector<IfcVector3>& normals, 
-		bool normalize = true, 
-		size_t ofs = 0) const;
+	void ComputePolygonNormals(std::vector<IfcVector3>& normals, bool normalize = true, size_t ofs = 0) const;
 
 	void Swap(TempMesh& other);
 };

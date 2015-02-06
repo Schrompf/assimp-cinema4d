@@ -167,6 +167,23 @@ void TempMesh::RemoveDegenerates()
 }
 
 // ------------------------------------------------------------------------------------------------
+IfcVector3 TempMesh::ComputePolygonNormal(const IfcVector3* vtcs, size_t cnt, bool normalize)
+{
+	std::vector<IfcFloat> temp((cnt+2)*3);
+	for( size_t vofs = 0, i = 0; vofs < cnt; ++vofs )
+	{
+		const IfcVector3& v = vtcs[vofs];
+		temp[i++] = v.x;
+		temp[i++] = v.y;
+		temp[i++] = v.z;
+	}
+
+	IfcVector3 nor;
+	NewellNormal<3, 3, 3>(nor, cnt, &temp[0], &temp[1], &temp[2]);
+	return normalize ? nor.Normalize() : nor;
+}
+
+// ------------------------------------------------------------------------------------------------
 void TempMesh::ComputePolygonNormals(std::vector<IfcVector3>& normals, 
 	bool normalize, 
 	size_t ofs) const
@@ -214,17 +231,7 @@ void TempMesh::ComputePolygonNormals(std::vector<IfcVector3>& normals,
 // Compute the normal of the last polygon in the given mesh
 IfcVector3 TempMesh::ComputeLastPolygonNormal(bool normalize) const
 {
-	size_t total = vertcnt.back(), vidx = verts.size() - total;
-	std::vector<IfcFloat> temp((total+2)*3);
-	for(size_t vofs = 0, cnt = 0; vofs < total; ++vofs) {
-		const IfcVector3& v = verts[vidx+vofs];
-		temp[cnt++] = v.x;
-		temp[cnt++] = v.y;
-		temp[cnt++] = v.z;
-	}
-	IfcVector3 nor;
-	NewellNormal<3,3,3>(nor,total,&temp[0],&temp[1],&temp[2]);
-	return normalize ? nor.Normalize() : nor;
+	return ComputePolygonNormal(&verts[verts.size() - vertcnt.back()], vertcnt.back(), normalize);
 }
 
 // ------------------------------------------------------------------------------------------------
