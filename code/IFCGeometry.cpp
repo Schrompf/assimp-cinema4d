@@ -579,6 +579,11 @@ void ProcessExtrudedAreaSolid(const IfcExtrudedAreaSolid& solid, TempMesh& resul
 	IfcVector3 min = in[0];
 	dir *= IfcMatrix3(trafo);
 
+	// reverse profile polygon if it's winded in the wrong direction in relation to the extrusion direction
+	IfcVector3 profileNormal = TempMesh::ComputePolygonNormal( in.data(), in.size());
+	if( profileNormal * dir < 0.0 )
+		std::reverse( in.begin(), in.end());
+
 	std::vector<IfcVector3> nors;
 	const bool openings = !!conv.apply_openings && conv.apply_openings->size();
 	
@@ -619,9 +624,9 @@ void ProcessExtrudedAreaSolid(const IfcExtrudedAreaSolid& solid, TempMesh& resul
 		curmesh.vertcnt.push_back(4);
 		
 		out.push_back(in[i]);
-		out.push_back(in[i]+dir);
-		out.push_back(in[next]+dir);
 		out.push_back(in[next]);
+		out.push_back(in[next]+dir);
+		out.push_back(in[i]+dir);
 
 		if(openings) {
 			if((in[i]-in[next]).Length() > diag * 0.1 && GenerateOpenings(*conv.apply_openings,nors,temp,true, true, dir)) {
@@ -646,8 +651,12 @@ void ProcessExtrudedAreaSolid(const IfcExtrudedAreaSolid& solid, TempMesh& resul
 	if(has_area) {
 
 		for(size_t n = 0; n < 2; ++n) {
-			for(size_t i = size; i--; ) {
-				out.push_back(in[i]+(n?dir:IfcVector3()));
+			if( n > 0 ) {
+				for(size_t i = 0; i < size; ++i ) 
+					out.push_back(in[i]+dir);
+			} else {
+				for(size_t i = size; i--; )
+					out.push_back(in[i]);
 			}
 
 			curmesh.vertcnt.push_back(size);
@@ -772,7 +781,7 @@ bool ProcessGeometricItem(const IfcRepresentationItem& geo, unsigned int matid, 
 	meshtmp->RemoveDegenerates();
 
 	if(fix_orientation) {
-		meshtmp->FixupFaceOrientation();
+//		meshtmp->FixupFaceOrientation();
 	}
 
 	aiMesh* const mesh = meshtmp->ToMesh();
