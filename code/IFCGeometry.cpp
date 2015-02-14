@@ -711,7 +711,7 @@ void ProcessSweptAreaSolid(const IfcSweptAreaSolid& swept, TempMesh& meshout,
 bool ProcessGeometricItem(const IfcRepresentationItem& geo, unsigned int matid, std::vector<unsigned int>& mesh_indices, 
 	ConversionData& conv)
 {
-	bool fix_orientation = true;
+	bool fix_orientation = false;
 	boost::shared_ptr< TempMesh > meshtmp = boost::make_shared<TempMesh>(); 
 	if(const IfcShellBasedSurfaceModel* shellmod = geo.ToPtr<IfcShellBasedSurfaceModel>()) {
 		BOOST_FOREACH(boost::shared_ptr<const IfcShell> shell,shellmod->SbsmBoundary) {
@@ -725,24 +725,27 @@ bool ProcessGeometricItem(const IfcRepresentationItem& geo, unsigned int matid, 
 				IFCImporter::LogWarn("unexpected type error, IfcShell ought to inherit from IfcConnectedFaceSet");
 			}
 		}
+		fix_orientation = true;
 	}
 	else  if(const IfcConnectedFaceSet* fset = geo.ToPtr<IfcConnectedFaceSet>()) {
 		ProcessConnectedFaceSet(*fset,*meshtmp.get(),conv);
+		fix_orientation = true;
 	}	
 	else  if(const IfcSweptAreaSolid* swept = geo.ToPtr<IfcSweptAreaSolid>()) {
 		ProcessSweptAreaSolid(*swept,*meshtmp.get(),conv);
 	}   
 	else  if(const IfcSweptDiskSolid* disk = geo.ToPtr<IfcSweptDiskSolid>()) {
 		ProcessSweptDiskSolid(*disk,*meshtmp.get(),conv);
-		fix_orientation = false;
 	}   
 	else if(const IfcManifoldSolidBrep* brep = geo.ToPtr<IfcManifoldSolidBrep>()) {
 		ProcessConnectedFaceSet(brep->Outer,*meshtmp.get(),conv);
+		fix_orientation = true;
 	} 
 	else if(const IfcFaceBasedSurfaceModel* surf = geo.ToPtr<IfcFaceBasedSurfaceModel>()) {
 		BOOST_FOREACH(const IfcConnectedFaceSet& fc, surf->FbsmFaces) {
 			ProcessConnectedFaceSet(fc,*meshtmp.get(),conv);
 		}
+		fix_orientation = true;
 	}  
 	else  if(const IfcBooleanResult* boolean = geo.ToPtr<IfcBooleanResult>()) {
 		ProcessBoolean(*boolean,*meshtmp.get(),conv);
@@ -781,7 +784,7 @@ bool ProcessGeometricItem(const IfcRepresentationItem& geo, unsigned int matid, 
 	meshtmp->RemoveDegenerates();
 
 	if(fix_orientation) {
-//		meshtmp->FixupFaceOrientation();
+		meshtmp->FixupFaceOrientation();
 	}
 
 	aiMesh* const mesh = meshtmp->ToMesh();

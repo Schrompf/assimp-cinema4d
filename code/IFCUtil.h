@@ -230,7 +230,7 @@ struct FuzzyVectorCompare {
 
 	FuzzyVectorCompare(IfcFloat epsilon) : epsilon(epsilon) {}
 	bool operator()(const IfcVector3& a, const IfcVector3& b) {
-		return std::fabs((a-b).SquareLength()) < epsilon;
+		return std::abs((a-b).SquareLength()) < epsilon;
 	}
 
 	const IfcFloat epsilon;
