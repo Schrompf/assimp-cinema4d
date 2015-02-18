@@ -299,6 +299,8 @@ void GetImporterInstanceList(std::vector< BaseImporter* >& out)
 #if ( !defined ASSIMP_BUILD_NO_ASSBIN_IMPORTER )
 	out.push_back( new AssbinImporter() );
 #endif
+
+	out.push_back( new C4DImporter() );
 }
 
 }
