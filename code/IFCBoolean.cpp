@@ -433,7 +433,7 @@ void ProcessPolygonalBoundedBooleanHalfSpaceDifference(const IfcPolygonalBounded
 	// clip the current contents of `meshout` against the plane we obtained from the second operand
 	const std::vector<IfcVector3>& in = first_operand.verts;
 	std::vector<IfcVector3>& outvert = result.verts;
-	std::vector<size_t>& outvertcnt = result.vertcnt;
+	std::vector<unsigned int>& outvertcnt = result.vertcnt;
 
 	outvert.reserve(in.size());
 	outvertcnt.reserve(first_operand.vertcnt.size());
